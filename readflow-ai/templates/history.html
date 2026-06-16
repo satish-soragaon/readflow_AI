@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}ReadFlow AI | History{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">History</p>
+        <h1>Reading sessions</h1>
+    </div>
+    {% if total %}<span class="muted">{{ total }} session{{ 's' if total != 1 }}</span>{% endif %}
+</section>
+
+<section class="card">
+    {% if sessions %}
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Date</th>
+                        <th>Duration</th>
+                        <th>WPM</th>
+                        <th>Mode</th>
+                        <th>Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in sessions %}
+                        <tr>
+                            <td>{{ item.document_name }}</td>
+                            <td class="nowrap">{{ item.started_at[:10] if item.started_at else '—' }}</td>
+                            <td class="nowrap">
+                                {% set m = item.duration_seconds // 60 %}
+                                {% set s = item.duration_seconds % 60 %}
+                                {% if m %}{{ m }}m {% endif %}{{ s }}s
+                            </td>
+                            <td>{{ item.wpm }}</td>
+                            <td>
+                                <span class="mode-badge">{{ item.reading_mode }}</span>
+                            </td>
+                            <td>
+                                <div class="compact-bar">
+                                    <div class="compact-fill"
+                                         style="width:{{ item.completion_percentage }}%"></div>
+                                </div>
+                                <small>{{ item.completion_percentage }}%</small>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Pagination #}
+        {% if total_pages > 1 %}
+        <nav class="pagination" aria-label="History pages">
+            {% if page > 1 %}
+                <a class="page-btn" href="{{ url_for('history.index', page=page-1) }}">&larr; Previous</a>
+            {% endif %}
+            <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+            {% if page < total_pages %}
+                <a class="page-btn" href="{{ url_for('history.index', page=page+1) }}">Next &rarr;</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+
+    {% else %}
+        <p class="empty-state">No reading history yet. Open a document to start tracking sessions.</p>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}ReadFlow AI | Page Not Found{% endblock %}
+
+{% block content %}
+<section class="error-view">
+    <p class="eyebrow">404</p>
+    <h1>Page not found</h1>
+    <p class="lede">The page you're looking for doesn't exist or was moved.</p>
+    <div class="hero-actions">
+        <a class="primary-button" href="{{ url_for('main.dashboard') }}">Go home</a>
+        <a class="secondary-link" href="{{ url_for('library.index') }}">Library</a>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en" data-theme="{{ g.user_settings.theme if g.user_settings else 'dark' }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}ReadFlow AI{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand-link" href="{{ url_for('main.dashboard') }}">ReadFlow AI</a>
+
+        <nav class="nav-links" aria-label="Primary navigation">
+            <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('library.index') }}">Library</a>
+            <a href="{{ url_for('history.index') }}">History</a>
+            <a href="{{ url_for('search.index') }}">Search</a>
+            <a href="{{ url_for('prefs.index') }}">Settings</a>
+        </nav>
+    </header>
+
+    <main class="app-shell">
+        {# Flash messages — categorised so success/error/info render differently #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container" role="alert" aria-live="polite">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

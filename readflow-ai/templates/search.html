@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}ReadFlow AI | Search{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">Search</p>
+        <h1>Find anything</h1>
+    </div>
+</section>
+
+<form class="search-form" method="get" role="search">
+    <input name="q" type="search" value="{{ q }}"
+           placeholder="Search documents, notes, and history..."
+           aria-label="Search query" autofocus>
+    <button class="primary-button" type="submit">Search</button>
+</form>
+
+{% if q %}
+<div class="search-summary">
+    {% set total = results.documents|length + results.notes|length + results.history|length %}
+    <p class="muted">
+        {% if total %}
+            {{ total }} result{{ 's' if total != 1 }} for <strong>{{ q }}</strong>
+        {% else %}
+            No results for <strong>{{ q }}</strong>
+        {% endif %}
+    </p>
+</div>
+
+<section class="content-grid search-results">
+    {# Documents #}
+    <article class="card">
+        <h2>Documents <span class="result-count">{{ results.documents|length }}</span></h2>
+        <div class="item-list">
+            {% for doc in results.documents %}
+                <a class="item-row" href="{{ url_for('library.read_document', document_id=doc.id) }}">
+                    <span class="item-title">{{ doc.title }}</span>
+                    <span class="item-meta">{{ "{:,}".format(doc.word_count) }} words</span>
+                </a>
+            {% else %}
+                <p class="empty-state">No document matches.</p>
+            {% endfor %}
+        </div>
+    </article>
+
+    {# Notes #}
+    <article class="card">
+        <h2>Notes <span class="result-count">{{ results.notes|length }}</span></h2>
+        <div class="item-list">
+            {% for note in results.notes %}
+                <div class="item-row">
+                    <span class="item-title">{{ note.document_title }}</span>
+                    <span class="item-meta">word {{ note.position }}</span>
+                    <p class="note-body">{{ note.body }}</p>
+                </div>
+            {% else %}
+                <p class="empty-state">No note matches.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+{# History (full width) #}
+{% if results.history %}
+<article class="card" style="margin-top:24px">
+    <h2>History <span class="result-count">{{ results.history|length }}</span></h2>
+    <div class="item-list">
+        {% for item in results.history %}
+            <div class="item-row">
+                <span class="item-title">{{ item.document_name }}</span>
+                <span class="item-meta">
+                    {{ item.started_at[:10] if item.started_at else '—' }}
+                    &middot; {{ item.completion_percentage }}% complete
+                </span>
+            </div>
+        {% endfor %}
+    </div>
+</article>
+{% endif %}
+
+{% endif %}
+{% endblock %}

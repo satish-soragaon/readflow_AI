@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}ReadFlow AI | {{ 'Register' if mode == 'register' else 'Login' }}{% endblock %}
+
+{% block content %}
+<section class="auth-view">
+    <form class="panel-form" method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <p class="eyebrow">{{ 'Create Account' if mode == 'register' else 'Welcome Back' }}</p>
+        <h1>{{ 'Start reading smarter' if mode == 'register' else 'Login to ReadFlow AI' }}</h1>
+
+        {% if mode == 'register' %}
+            <label class="field-label" for="name">Name</label>
+            <input id="name" name="name" type="text"
+                   autocomplete="name" required minlength="1">
+        {% endif %}
+
+        <label class="field-label" for="email">Email</label>
+        <input id="email" name="email" type="email"
+               autocomplete="email" required>
+
+        <label class="field-label" for="password">Password</label>
+        <input id="password" name="password" type="password"
+               autocomplete="{{ 'new-password' if mode == 'register' else 'current-password' }}"
+               required minlength="8">
+        {% if mode == 'register' %}
+            <p class="field-help">Minimum 8 characters.</p>
+        {% endif %}
+
+        <button class="primary-button" type="submit">
+            {{ 'Create account' if mode == 'register' else 'Login' }}
+        </button>
+
+        <p class="muted">
+            {% if mode == 'register' %}
+                Already have an account? <a href="{{ url_for('auth.login') }}">Login</a>.
+            {% else %}
+                New here? <a href="{{ url_for('auth.register') }}">Create an account</a>.
+            {% endif %}
+        </p>
+    </form>
+</section>
+{% endblock %}

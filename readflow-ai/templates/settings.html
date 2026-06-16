@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}ReadFlow AI | Settings{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">Settings</p>
+        <h1>Your defaults</h1>
+    </div>
+</section>
+
+<form class="panel-form settings-form" method="post" style="max-width:480px">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    {# ── Reading speed ──────────────────────────────────────────────────── #}
+    <fieldset class="settings-group">
+        <legend class="field-label">Reading speed</legend>
+        <label class="field-label" for="default_wpm">Default WPM</label>
+        <select id="default_wpm" name="default_wpm">
+            {% for value in [100, 200, 300, 450, 600, 800, 1000] %}
+                <option value="{{ value }}" {{ 'selected' if settings.default_wpm == value }}>
+                    {{ value }} WPM
+                </option>
+            {% endfor %}
+        </select>
+
+        <label class="field-label" for="default_mode">Default reading mode</label>
+        <select id="default_mode" name="default_mode">
+            {% for value, label in [('word','Single word'),('chunk','2–4 word chunk'),('sentence','Sentence'),('line','Line')] %}
+                <option value="{{ value }}" {{ 'selected' if settings.default_mode == value }}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label class="check-row">
+            <input name="smart_pause_enabled" type="checkbox"
+                   {{ 'checked' if settings.smart_pause_enabled }}>
+            Smart pauses
+            <span class="field-help">&mdash; longer display time at punctuation and long words</span>
+        </label>
+    </fieldset>
+
+    {# ── Appearance ─────────────────────────────────────────────────────── #}
+    <fieldset class="settings-group">
+        <legend class="field-label">Appearance</legend>
+
+        <label class="field-label" for="theme">Theme</label>
+        <select id="theme" name="theme">
+            <option value="dark"  {{ 'selected' if settings.theme == 'dark'  }}>Dark</option>
+            <option value="light" {{ 'selected' if settings.theme == 'light' }}>Light</option>
+        </select>
+
+        <label class="field-label" for="font_size">
+            Reader font scale &mdash; <output for="font_size" id="font-scale-label">{{ settings.font_size }}%</output>
+        </label>
+        <input id="font_size" name="font_size" type="range"
+               min="80" max="140" step="10"
+               value="{{ settings.font_size }}"
+               oninput="document.getElementById('font-scale-label').textContent = this.value + '%'">
+        <div class="range-labels">
+            <span>80%</span><span>100%</span><span>120%</span><span>140%</span>
+        </div>
+    </fieldset>
+
+    <button class="primary-button" type="submit">Save settings</button>
+</form>
+{% endblock %}

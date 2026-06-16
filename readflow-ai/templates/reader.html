@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}ReadFlow AI | {{ source_label }}{% endblock %}
+
+{% block content %}
+<section class="reader-view"
+         aria-labelledby="reader-title"
+         style="--reader-scale: {{ (g.user_settings.font_size / 100) if g.user_settings else 1 }}">
+
+    <header class="reader-header">
+        <div>
+            <p class="eyebrow">Now Reading</p>
+            <h1 id="reader-title" title="{{ source_label }}">{{ source_label }}</h1>
+        </div>
+        <div class="header-actions">
+            <a class="secondary-link" href="{{ url_for('ai.ai_tools', document_id=document.id) }}">AI Tools</a>
+            <a class="secondary-link" href="{{ url_for('library.index') }}">Library</a>
+        </div>
+    </header>
+
+    {# ── RSVP word display ────────────────────────────────────────────────── #}
+    <div class="reader-stage" aria-live="polite" aria-label="RSVP reader display">
+        <div id="word-display" class="word-display">Ready</div>
+    </div>
+
+    {# ── Controls panel ───────────────────────────────────────────────────── #}
+    <div class="reader-panel">
+        <div class="progress-bar" role="progressbar"
+             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+             aria-label="Reading progress">
+            <div id="progress-fill" class="progress-fill"></div>
+        </div>
+
+        <div class="reader-settings">
+            <div>
+                <label class="field-label" for="wpm-slider">Speed</label>
+                <div class="slider-row">
+                    <input id="wpm-slider" type="range" min="0" max="6" step="1" value="1">
+                    <output id="wpm-value" for="wpm-slider">200 WPM</output>
+                </div>
+            </div>
+            <div>
+                <label class="field-label" for="reading-mode">Mode</label>
+                <select id="reading-mode">
+                    <option value="word">Single word</option>
+                    <option value="chunk">2–4 word chunk</option>
+                    <option value="sentence">Sentence</option>
+                    <option value="line">Line</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="controls" aria-label="Reader controls">
+            <button id="start-button"   type="button">Start</button>
+            <button id="pause-button"   type="button">Pause</button>
+            <button id="resume-button"  type="button">Resume</button>
+            <button id="previous-button" type="button">&#8592; Back</button>
+            <button id="next-button"    type="button">Forward &#8594;</button>
+            <button id="restart-button" type="button">Restart</button>
+        </div>
+
+        <dl class="progress-grid">
+            <div>
+                <dt>Word</dt>
+                <dd><span id="current-word">0</span> / <span id="total-words">{{ word_count }}</span></dd>
+            </div>
+            <div>
+                <dt>Completion</dt>
+                <dd id="completion">0%</dd>
+            </div>
+            <div>
+                <dt>Est. remaining</dt>
+                <dd id="time-remaining">--</dd>
+            </div>
+        </dl>
+
+        <p class="shortcut-help">
+            Shortcuts: <kbd>Space</kbd> pause/resume &middot; <kbd>&larr;</kbd> back &middot;
+            <kbd>&rarr;</kbd> forward &middot; <kbd>R</kbd> restart &middot; progress saves automatically
+        </p>
+    </div>
+</section>
+
+{# ── Annotation panels ─────────────────────────────────────────────────────── #}
+<section class="reader-annotation-bar">
+    {# Bookmark #}
+    <form class="annotation-form" id="bookmark-form"
+          action="{{ url_for('annotations.add_bookmark', document_id=document.id) }}"
+          method="post" data-type="bookmark">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input id="bookmark-position" name="position" type="hidden" value="{{ document.last_position }}">
+        <input name="label" type="text" placeholder="Bookmark label (optional)" maxlength="200">
+        <button type="submit">Add bookmark</button>
+    </form>
+
+    {# Note #}
+    <form class="annotation-form" id="note-form"
+          action="{{ url_for('annotations.add_note', document_id=document.id) }}"
+          method="post" data-type="note">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input id="note-position" name="position" type="hidden" value="{{ document.last_position }}">
+        <input name="body" type="text" placeholder="Note at current word" maxlength="1000" required>
+        <button type="submit">Save note</button>
+    </form>
+
+    {# Highlight #}
+    <form class="annotation-form" id="highlight-form"
+          action="{{ url_for('annotations.add_highlight', document_id=document.id) }}"
+          method="post" data-type="highlight">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input id="highlight-position" name="position" type="hidden" value="{{ document.last_position }}">
+        <input name="text" type="text" placeholder="Highlight text (blank = nearby excerpt)" maxlength="500">
+        <button type="submit">Highlight</button>
+    </form>
+</section>
+
+{# ── Companion cards (bookmarks / notes / highlights) ─────────────────────── #}
+<section class="content-grid reader-companion">
+    <article class="card" id="bookmarks-card">
+        <h2>Bookmarks</h2>
+        <div class="item-list" id="bookmarks-list">
+            {% for item in bookmarks %}
+                <div class="annotation-item" data-id="{{ item.id }}">
+                    <button class="jump-button" data-position="{{ item.position }}" type="button">
+                        {{ item.label }} &middot; word {{ item.position }}
+                    </button>
+                    <button class="delete-annotation icon-btn"
+                            data-url="{{ url_for('annotations.delete_bookmark', document_id=document.id, bookmark_id=item.id) }}"
+                            title="Delete bookmark" aria-label="Delete bookmark">&#10005;</button>
+                </div>
+            {% else %}
+                <p class="empty-state" id="bookmarks-empty">No bookmarks yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="card" id="notes-card">
+        <h2>Notes</h2>
+        <div class="item-list" id="notes-list">
+            {% for item in notes %}
+                <div class="annotation-item" data-id="{{ item.id }}">
+                    <p class="annotation-body">
+                        <strong>Word {{ item.position }}</strong><br>{{ item.body }}
+                    </p>
+                    <button class="delete-annotation icon-btn"
+                            data-url="{{ url_for('annotations.delete_note', document_id=document.id, note_id=item.id) }}"
+                            title="Delete note" aria-label="Delete note">&#10005;</button>
+                </div>
+            {% else %}
+                <p class="empty-state" id="notes-empty">No notes yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="card" id="highlights-card">
+        <h2>Highlights</h2>
+        <div class="item-list" id="highlights-list">
+            {% for item in highlights %}
+                <div class="annotation-item" data-id="{{ item.id }}">
+                    <p class="annotation-body">
+                        <strong>Word {{ item.start_position }}</strong><br>{{ item.text }}
+                    </p>
+                    <button class="delete-annotation icon-btn"
+                            data-url="{{ url_for('annotations.delete_highlight', document_id=document.id, highlight_id=item.id) }}"
+                            title="Delete highlight" aria-label="Delete highlight">&#10005;</button>
+                </div>
+            {% else %}
+                <p class="empty-state" id="highlights-empty">No highlights yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+{# ── Reader config injected into the page for reader.js ───────────────────── #}
+<script>
+    window.READFLOW_TEXT   = {{ text | tojson }};
+    window.READFLOW_CONFIG = {
+        documentId:        {{ document.id }},
+        sessionId:         {{ session_id }},
+        startPosition:     {{ document.last_position or 0 }},
+        defaultWpm:        {{ document.last_wpm or g.user_settings.default_wpm }},
+        defaultMode:       {{ (document.last_mode or g.user_settings.default_mode) | tojson }},
+        smartPauseEnabled: {{ 'true' if g.user_settings.smart_pause_enabled else 'false' }},
+        addBookmarkUrl:    {{ url_for('annotations.add_bookmark',   document_id=document.id) | tojson }},
+        addNoteUrl:        {{ url_for('annotations.add_note',       document_id=document.id) | tojson }},
+        addHighlightUrl:   {{ url_for('annotations.add_highlight',  document_id=document.id) | tojson }},
+    };
+</script>
+<script src="{{ url_for('static', filename='js/reader.js') }}"></script>
+{% endblock %}

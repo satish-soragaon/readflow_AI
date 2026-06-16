@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}ReadFlow AI | Dashboard{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">Dashboard</p>
+        <h1>Your reading cockpit</h1>
+    </div>
+    <a class="primary-button" href="{{ url_for('library.index') }}">Add document</a>
+</section>
+
+{# ── Metrics row ───────────────────────────────────────────────────────────── #}
+<section class="metric-grid" aria-label="Reading statistics">
+    <article class="metric-card">
+        <span>Documents read</span>
+        <strong>{{ stats.total_documents_read }}</strong>
+    </article>
+    <article class="metric-card">
+        <span>Words read</span>
+        <strong>{{ "{:,}".format(stats.total_words_read) }}</strong>
+    </article>
+    <article class="metric-card">
+        <span>Reading time</span>
+        <strong>
+            {% set mins = stats.total_reading_time // 60 %}
+            {% if mins >= 60 %}
+                {{ mins // 60 }}h {{ mins % 60 }}m
+            {% else %}
+                {{ mins }}m
+            {% endif %}
+        </strong>
+    </article>
+    <article class="metric-card">
+        <span>Average WPM</span>
+        <strong>{{ stats.average_wpm }}</strong>
+    </article>
+    <article class="metric-card">
+        <span>Highest WPM</span>
+        <strong>{{ stats.highest_wpm }}</strong>
+    </article>
+    <article class="metric-card">
+        <span>Reading streak</span>
+        <strong>{{ streak }}d</strong>
+    </article>
+    <article class="metric-card">
+        <span>Completed sessions</span>
+        <strong>{{ stats.completed_sessions }}</strong>
+    </article>
+</section>
+
+{# ── Charts & recent docs ──────────────────────────────────────────────────── #}
+<section class="content-grid">
+    <article class="card">
+        <h2>Words read — last 7 days</h2>
+        {% if chart_rows %}
+            <div class="bar-chart" aria-label="7-day reading activity">
+                {% set max_value = chart_rows | map(attribute='value') | max %}
+                {% for row in chart_rows %}
+                    <div class="bar-row">
+                        <span>{{ row.label[5:] }}</span>
+                        <div role="presentation">
+                            <i style="width: {{ ((row.value / (max_value or 1)) * 100) | round }}%"></i>
+                        </div>
+                        <b>{{ "{:,}".format(row.value) }}</b>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">No reading sessions yet — open a document to start building your dashboard.</p>
+        {% endif %}
+    </article>
+
+    <article class="card">
+        <h2>Recent documents</h2>
+        {% if recent_docs %}
+            <div class="item-list">
+                {% for doc in recent_docs %}
+                    <a class="item-row" href="{{ url_for('library.read_document', document_id=doc.id) }}">
+                        <span class="item-title">{{ doc.title }}</span>
+                        <span class="item-meta">
+                            {{ "{:,}".format(doc.word_count) }} words
+                            &middot;
+                            {% if doc.word_count > 0 %}
+                                {{ ((doc.last_position / doc.word_count) * 100) | round | int }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">Your library is empty. <a href="{{ url_for('library.index') }}">Add a document</a> to get started.</p>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}ReadFlow AI | Library{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">Library</p>
+        <h1>Your documents</h1>
+    </div>
+    {% if total %}<span class="muted">{{ total }} document{{ 's' if total != 1 }}</span>{% endif %}
+</section>
+
+{# ── Upload / paste form ───────────────────────────────────────────────────── #}
+<form class="upload-form" action="{{ url_for('library.index') }}"
+      method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label class="field-label" for="title">Title <span class="muted">(optional)</span></label>
+    <input id="title" name="title" type="text" placeholder="Leave blank to use the filename">
+
+    <label class="field-label" for="document">Upload file</label>
+    <label id="drop-zone" class="drop-zone" for="document">
+        <input id="document" name="document" type="file"
+               accept=".pdf,.docx,.txt,.jpg,.jpeg,.png,.webp">
+        <span class="drop-title">Drop a file here or click to browse</span>
+        <span id="selected-file" class="drop-detail">
+            PDF, DOCX, TXT, JPG, JPEG, PNG, WEBP &mdash; max 16 MB
+        </span>
+    </label>
+
+    <details class="paste-toggle">
+        <summary class="field-label" style="cursor:pointer">Paste text instead</summary>
+        <textarea id="manual_text" name="manual_text" rows="7"
+                  placeholder="Paste your text here. Leave the upload field empty."></textarea>
+    </details>
+
+    <button class="primary-button" type="submit">Save and read</button>
+</form>
+
+{# ── Document grid ─────────────────────────────────────────────────────────── #}
+{% if documents %}
+<section class="document-grid">
+    {% for doc in documents %}
+        <article class="document-card">
+            <div class="doc-meta">
+                <h2>{{ doc.title }}</h2>
+                <p>
+                    {{ "{:,}".format(doc.word_count) }} words
+                    &middot;
+                    <span class="source-badge source-{{ doc.source_type }}">{{ doc.source_type }}</span>
+                    &middot;
+                    {% if doc.word_count > 0 %}
+                        {{ ((doc.last_position / doc.word_count) * 100) | round | int }}% read
+                    {% else %}
+                        not started
+                    {% endif %}
+                </p>
+                <progress
+                    value="{{ doc.last_position }}"
+                    max="{{ doc.word_count or 1 }}"
+                    aria-label="{{ ((doc.last_position / (doc.word_count or 1)) * 100) | round | int }}% complete">
+                </progress>
+            </div>
+
+            <div class="card-actions">
+                <a class="primary-button" href="{{ url_for('library.read_document', document_id=doc.id) }}">Read</a>
+                <a class="secondary-link"  href="{{ url_for('ai.ai_tools', document_id=doc.id) }}">AI Tools</a>
+            </div>
+
+            <form class="inline-form" action="{{ url_for('library.rename_document', document_id=doc.id) }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input name="title" type="text" value="{{ doc.title }}" aria-label="New title">
+                <button type="submit">Rename</button>
+            </form>
+
+            <form action="{{ url_for('library.delete_document', document_id=doc.id) }}" method="post"
+                  onsubmit="return confirm('Delete "{{ doc.title | e }}"? This cannot be undone.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="danger-button" type="submit">Delete</button>
+            </form>
+        </article>
+    {% endfor %}
+</section>
+
+{# ── Pagination ────────────────────────────────────────────────────────────── #}
+{% if total_pages > 1 %}
+<nav class="pagination" aria-label="Library pages">
+    {% if page > 1 %}
+        <a class="page-btn" href="{{ url_for('library.index', page=page-1) }}">&larr; Previous</a>
+    {% endif %}
+    <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+    {% if page < total_pages %}
+        <a class="page-btn" href="{{ url_for('library.index', page=page+1) }}">Next &rarr;</a>
+    {% endif %}
+</nav>
+{% endif %}
+
+{% else %}
+<p class="empty-state" style="margin-top:2rem">
+    No documents yet. Upload a file or paste text above to get started.
+</p>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

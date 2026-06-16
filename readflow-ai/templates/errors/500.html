@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}ReadFlow AI | Server Error{% endblock %}
+
+{% block content %}
+<section class="error-view">
+    <p class="eyebrow">500</p>
+    <h1>Something went wrong</h1>
+    <p class="lede">An unexpected error occurred. The issue has been logged. Please try again in a moment.</p>
+    <div class="hero-actions">
+        <a class="primary-button" href="{{ url_for('main.dashboard') }}">Go home</a>
+    </div>
+</section>
+{% endblock %}

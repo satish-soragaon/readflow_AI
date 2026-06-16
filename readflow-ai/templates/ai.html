@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}ReadFlow AI | AI Tools — {{ document.title }}{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">AI Workspace</p>
+        <h1>{{ document.title }}</h1>
+    </div>
+    <a class="secondary-link" href="{{ url_for('library.read_document', document_id=document.id) }}">
+        &larr; Back to reader
+    </a>
+</section>
+
+{# Provider notice #}
+{% if provider_name == 'disabled' %}
+<div class="flash flash-info" style="margin-bottom:20px">
+    <strong>Using text-extraction fallback.</strong>
+    Set <code>AI_PROVIDER=anthropic</code> (or <code>openai</code>) and add your API key in
+    <code>.env</code> to unlock full AI-powered generation.
+</div>
+{% else %}
+<p class="muted" style="margin-bottom:16px">Provider: <strong>{{ provider_name }}</strong></p>
+{% endif %}
+
+{# Task selector #}
+<form class="panel-form" method="post" style="max-width:400px">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label class="field-label" for="task">Generate</label>
+    <select id="task" name="task">
+        {% for value, label in [
+            ('summary',     'Summary'),
+            ('takeaways',   'Key takeaways'),
+            ('flashcards',  'Flashcards'),
+            ('quiz',        'Comprehension quiz'),
+            ('study_notes', 'Study notes'),
+            ('vocabulary',  'Vocabulary builder'),
+        ] %}
+            <option value="{{ value }}" {{ 'selected' if task == value }}>{{ label }}</option>
+        {% endfor %}
+    </select>
+
+    <button class="primary-button" type="submit">Generate</button>
+</form>
+
+{# Output panel #}
+<article class="card ai-output{% if output and output.is_error %} ai-error{% endif %}" style="margin-top:24px">
+    {% if output %}
+        <h2>{{ output.title }}</h2>
+        <div class="markdown-body">
+            {{ output.content | markdown | safe }}
+        </div>
+    {% else %}
+        <p class="empty-state">
+            Select a study artifact above and click Generate.
+        </p>
+    {% endif %}
+</article>
+{% endblock %}

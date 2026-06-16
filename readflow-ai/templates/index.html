@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}ReadFlow AI — Speed Reading Platform{% endblock %}
+
+{% block content %}
+<section class="hero-grid">
+    <div>
+        <p class="eyebrow">Private Reading Workspace</p>
+        <h1>Read faster.<br>Remember more.</h1>
+        <p class="lede">
+            Upload any document, read at your pace with RSVP speed reading,
+            annotate as you go, and let AI turn your reading into study-ready
+            summaries, flashcards, and quizzes.
+        </p>
+        <div class="hero-actions">
+            <a class="primary-button" href="{{ url_for('auth.register') }}">Create free account</a>
+            <a class="secondary-link" href="{{ url_for('auth.login') }}">Login</a>
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <h2>What you get</h2>
+        <ul class="check-list">
+            <li>Private library — PDF, DOCX, TXT, and image OCR</li>
+            <li>RSVP speed reader with 4 modes and smart pauses</li>
+            <li>Bookmarks, notes, highlights, and full-text search</li>
+            <li>Reading streak, WPM analytics, and session history</li>
+            <li>AI summaries, flashcards, quizzes, and vocabulary builder</li>
+        </ul>
+    </div>
+</section>
+{% endblock %}
